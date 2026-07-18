@@ -39,7 +39,15 @@ export function AuthProvider({ children }) {
       options: { data: { full_name: fullName } }
     })
     if (error) throw error
-    // Profile auto-created by DB trigger with status='pending'
+    // Also explicitly update profile with name in case trigger missed it
+    if (data.user && fullName) {
+      await supabase.from('profiles').upsert({
+        id: data.user.id,
+        email,
+        full_name: fullName,
+        status: 'pending'
+      })
+    }
     return data
   }
 

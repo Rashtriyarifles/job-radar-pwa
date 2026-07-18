@@ -35,7 +35,9 @@ export default function Jobs() {
             <Radar size={20} className="text-radar-green" />
             <span className="font-semibold">Job Radar</span>
             {profile?.full_name && (
-              <span className="text-gray-400 text-sm">· Hi {profile.full_name.split(' ')[0]}</span>
+              <span className="text-gray-400 text-sm">
+                · Hi {profile.full_name.split(' ')[0]}
+              </span>
             )}
           </div>
           <button onClick={requestNotifications}

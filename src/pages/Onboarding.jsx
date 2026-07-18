@@ -12,12 +12,14 @@ const LOCATIONS = ['Delhi/NCR', 'Bengaluru', 'Mumbai', 'Hyderabad', 'Pune', 'Che
 const EXPERIENCE = ['0-1 years', '1-3 years', '3-5 years', '5-8 years', '8+ years']
 
 const ADMIN_EMAILS = [
-  'abhijeetsingtomer@gmail.com',
+  'abhijeetsinghtomer@gmail.com',
+  'abhijeet.monotype@gmail.com',
   'abhijeet.tomar@monotype.com',
 ]
 
 export default function Onboarding() {
   const [step, setStep]               = useState(0)
+  const [fullName, setFullName]         = useState('')
   const [currentRole, setCurrentRole] = useState('')
   const [experience, setExperience]   = useState('')
   const [domains, setDomains]         = useState([])
@@ -40,6 +42,7 @@ export default function Onboarding() {
     setError('')
     try {
       await updateProfile({
+        full_name:           fullName.trim() || null,
         current_role:        currentRole || null,
         experience_years:    experience  || null,
         domains:             domains.length  ? domains   : null,
@@ -84,6 +87,15 @@ export default function Onboarding() {
       <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full">
         {step === 0 && (
           <div className="space-y-4">
+            <div>
+              <label className="text-xs font-medium text-radar-muted uppercase tracking-wide">
+                Full Name <span className="text-red-500">*</span>
+              </label>
+              <input type="text" value={fullName} onChange={e => setFullName(e.target.value)}
+                     placeholder="e.g. Rahul Kumar"
+                     className="mt-1 w-full px-4 py-3 bg-white border border-radar-border rounded-xl
+                                text-sm focus:outline-none focus:ring-2 focus:ring-radar-dark/20" />
+            </div>
             <div>
               <label className="text-xs font-medium text-radar-muted uppercase tracking-wide">Current Role</label>
               <input type="text" value={currentRole} onChange={e => setCurrentRole(e.target.value)}
@@ -180,9 +192,16 @@ export default function Onboarding() {
           </button>
         )}
         {step < 2 && (
-          <button onClick={() => setStep(step + 1)}
-                  className="flex-1 flex items-center justify-center gap-1 bg-radar-dark text-white
-                             py-3 rounded-xl font-semibold text-sm hover:opacity-90">
+          <button
+            onClick={() => {
+              if (step === 0 && !fullName.trim()) {
+                alert('Please enter your full name to continue.')
+                return
+              }
+              setStep(step + 1)
+            }}
+            className="flex-1 flex items-center justify-center gap-1 bg-radar-dark text-white
+                       py-3 rounded-xl font-semibold text-sm hover:opacity-90">
             Continue <ChevronRight size={16} />
           </button>
         )}
