@@ -8,7 +8,7 @@ import {
 } from 'lucide-react'
 
 const ADMIN_EMAILS = [
-  'abhijeetsingtomer@gmail.com',
+  'abhijeetsinghtomer@gmail.com',
   'abhijeet.tomar@monotype.com',
 ]
 

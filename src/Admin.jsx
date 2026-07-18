@@ -22,6 +22,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true)
   const [actioning, setActioning] = useState(null)
 
+  console.log('DEBUG user email:', user?.email, 'isAdmin:', ADMIN_EMAILS.includes(user?.email?.toLowerCase()))
   const isAdmin = ADMIN_EMAILS.includes(user?.email?.toLowerCase())
 
   useEffect(() => {
