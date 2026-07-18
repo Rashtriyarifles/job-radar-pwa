@@ -10,7 +10,8 @@ import Admin from './pages/Admin.jsx'
 import Pending from './pages/Pending.jsx'
 
 const ADMIN_EMAILS = [
-  'abhijeetsingtomer@gmail.com',
+  'abhijeetsinghtomer@gmail.com',
+  'abhijeet.monotype@gmail.com',
   'abhijeet.tomar@monotype.com',
 ]
 
