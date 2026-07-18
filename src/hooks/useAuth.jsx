@@ -23,17 +23,23 @@ export function AuthProvider({ children }) {
   }, [])
 
   async function fetchProfile(userId) {
-    const { data } = await supabase.from('profiles').select('*').eq('id', userId).single()
+    const { data } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single()
     setProfile(data)
     setLoading(false)
   }
 
   async function signUp(email, password, fullName) {
-    const { data, error } = await supabase.auth.signUp({ email, password })
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { full_name: fullName } }
+    })
     if (error) throw error
-    if (data.user) {
-      await supabase.from('profiles').insert({ id: data.user.id, email, full_name: fullName })
-    }
+    // Profile auto-created by DB trigger with status='pending'
     return data
   }
 
@@ -45,18 +51,32 @@ export function AuthProvider({ children }) {
 
   async function signOut() {
     await supabase.auth.signOut()
-    setUser(null); setProfile(null)
+    setUser(null)
+    setProfile(null)
   }
 
   async function updateProfile(updates) {
-    const { data, error } = await supabase.from('profiles').update(updates).eq('id', user.id).select().single()
+    const { data, error } = await supabase
+      .from('profiles')
+      .update(updates)
+      .eq('id', user.id)
+      .select()
+      .single()
     if (error) throw error
     setProfile(data)
     return data
   }
 
+  async function refreshProfile() {
+    if (user) await fetchProfile(user.id)
+  }
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signUp, signIn, signOut, updateProfile }}>
+    <AuthContext.Provider value={{
+      user, profile, loading,
+      signUp, signIn, signOut,
+      updateProfile, refreshProfile
+    }}>
       {children}
     </AuthContext.Provider>
   )

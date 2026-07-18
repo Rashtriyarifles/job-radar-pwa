@@ -8,12 +8,13 @@ const DOMAINS = [
   'Product Management', 'Financial Analysis', 'Data Science',
   'Growth & Marketing', 'Investment Analysis', 'Operations',
 ]
-
-const LOCATIONS = [
-  'Delhi/NCR', 'Bengaluru', 'Mumbai', 'Hyderabad', 'Pune', 'Chennai', 'Remote'
-]
-
+const LOCATIONS = ['Delhi/NCR', 'Bengaluru', 'Mumbai', 'Hyderabad', 'Pune', 'Chennai', 'Remote']
 const EXPERIENCE = ['0-1 years', '1-3 years', '3-5 years', '5-8 years', '8+ years']
+
+const ADMIN_EMAILS = [
+  'abhijeetsingtomer@gmail.com',
+  'abhijeet.tomar@monotype.com',
+]
 
 export default function Onboarding() {
   const [step, setStep]               = useState(0)
@@ -23,10 +24,12 @@ export default function Onboarding() {
   const [locations, setLocations]     = useState([])
   const [linkedin, setLinkedin]       = useState('')
   const [saving, setSaving]           = useState(false)
-  const { updateProfile }             = useAuth()
+  const [error, setError]             = useState('')
+  const { user, profile, updateProfile } = useAuth()
   const navigate                      = useNavigate()
 
-  const steps = ['About You', 'Expertise', 'Preferences', 'Done']
+  const isAdmin = ADMIN_EMAILS.includes(user?.email?.toLowerCase())
+  const steps   = ['About You', 'Expertise', 'Preferences', 'Done']
 
   function toggleItem(list, setList, item) {
     setList(list.includes(item) ? list.filter(x => x !== item) : [...list, item])
@@ -34,20 +37,30 @@ export default function Onboarding() {
 
   async function finish() {
     setSaving(true)
-    await updateProfile({
-      current_role: currentRole,
-      experience_years: experience,
-      domains,
-      locations,
-      linkedin_url: linkedin,
-      onboarding_complete: true,
-    })
-    navigate('/jobs')
+    setError('')
+    try {
+      await updateProfile({
+        current_role:        currentRole || null,
+        experience_years:    experience  || null,
+        domains:             domains.length  ? domains   : null,
+        locations:           locations.length ? locations : null,
+        linkedin_url:        linkedin || null,
+        onboarding_complete: true,
+      })
+      // Admin goes straight to jobs; others go to pending
+      if (isAdmin || profile?.status === 'approved') {
+        navigate('/jobs')
+      } else {
+        navigate('/pending')
+      }
+    } catch (e) {
+      setError(e.message)
+      setSaving(false)
+    }
   }
 
   return (
     <div className="min-h-screen bg-radar-bg flex flex-col">
-      {/* Progress bar */}
       <div className="bg-radar-dark px-6 pt-12 pb-6">
         <div className="flex items-center justify-between mb-4">
           {steps.map((s, i) => (
@@ -69,12 +82,10 @@ export default function Onboarding() {
       </div>
 
       <div className="flex-1 px-6 py-8 max-w-sm mx-auto w-full">
-
-        {/* Step 0 — About */}
         {step === 0 && (
           <div className="space-y-4">
             <div>
-              <label className="text-xs font-medium text-radar-muted uppercase tracking-wide">Current Role / Title</label>
+              <label className="text-xs font-medium text-radar-muted uppercase tracking-wide">Current Role</label>
               <input type="text" value={currentRole} onChange={e => setCurrentRole(e.target.value)}
                      placeholder="e.g. Business Analyst, MBA Student"
                      className="mt-1 w-full px-4 py-3 bg-white border border-radar-border rounded-xl
@@ -97,10 +108,9 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step 1 — Domains */}
         {step === 1 && (
           <div>
-            <p className="text-sm text-radar-muted mb-4">Select all that apply to your expertise</p>
+            <p className="text-sm text-radar-muted mb-4">Select your areas of expertise</p>
             <div className="flex flex-wrap gap-2">
               {DOMAINS.map(d => (
                 <button key={d} onClick={() => toggleItem(domains, setDomains, d)}
@@ -115,13 +125,10 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step 2 — Preferences */}
         {step === 2 && (
           <div className="space-y-6">
             <div>
-              <p className="text-xs font-medium text-radar-muted uppercase tracking-wide mb-2">
-                Preferred Locations
-              </p>
+              <p className="text-xs font-medium text-radar-muted uppercase tracking-wide mb-2">Preferred Locations</p>
               <div className="flex flex-wrap gap-2">
                 {LOCATIONS.map(loc => (
                   <button key={loc} onClick={() => toggleItem(locations, setLocations, loc)}
@@ -135,9 +142,7 @@ export default function Onboarding() {
               </div>
             </div>
             <div>
-              <label className="text-xs font-medium text-radar-muted uppercase tracking-wide">
-                LinkedIn URL (optional)
-              </label>
+              <label className="text-xs font-medium text-radar-muted uppercase tracking-wide">LinkedIn (optional)</label>
               <input type="url" value={linkedin} onChange={e => setLinkedin(e.target.value)}
                      placeholder="https://linkedin.com/in/yourname"
                      className="mt-1 w-full px-4 py-3 bg-white border border-radar-border rounded-xl
@@ -146,48 +151,52 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step 3 — Done */}
         {step === 3 && (
           <div className="text-center py-8">
             <div className="w-16 h-16 bg-radar-green rounded-full flex items-center justify-center mx-auto mb-4">
               <Check size={32} className="text-white" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">You're all set!</h2>
+            <h2 className="text-xl font-bold text-gray-900">Profile complete!</h2>
             <p className="text-radar-muted text-sm mt-2">
-              Your profile is ready. You'll now see jobs matched to your expertise and preferences.
+              {isAdmin || profile?.status === 'approved'
+                ? "You'll now see jobs matched to your preferences."
+                : "Your profile is ready. Waiting for admin approval to access jobs."}
             </p>
+            {error && (
+              <div className="mt-4 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl">
+                {error}
+              </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Navigation */}
       <div className="px-6 pb-8 flex gap-3 max-w-sm mx-auto w-full">
         {step > 0 && step < 3 && (
           <button onClick={() => setStep(step - 1)}
                   className="flex items-center gap-1 px-4 py-3 rounded-xl border border-radar-border
-                             text-sm text-radar-muted hover:bg-gray-50 transition-colors">
+                             text-sm text-radar-muted hover:bg-gray-50">
             <ChevronLeft size={16} /> Back
           </button>
         )}
         {step < 2 && (
           <button onClick={() => setStep(step + 1)}
                   className="flex-1 flex items-center justify-center gap-1 bg-radar-dark text-white
-                             py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition-opacity">
+                             py-3 rounded-xl font-semibold text-sm hover:opacity-90">
             Continue <ChevronRight size={16} />
           </button>
         )}
         {step === 2 && (
           <button onClick={() => setStep(3)}
-                  className="flex-1 bg-radar-dark text-white py-3 rounded-xl font-semibold
-                             text-sm hover:opacity-90 transition-opacity">
+                  className="flex-1 bg-radar-dark text-white py-3 rounded-xl font-semibold text-sm hover:opacity-90">
             Finish Profile
           </button>
         )}
         {step === 3 && (
           <button onClick={finish} disabled={saving}
                   className="flex-1 bg-radar-green text-white py-3 rounded-xl font-semibold
-                             text-sm hover:opacity-90 transition-opacity disabled:opacity-50">
-            {saving ? 'Saving...' : 'View My Jobs →'}
+                             text-sm hover:opacity-90 disabled:opacity-50">
+            {saving ? 'Saving...' : isAdmin || profile?.status === 'approved' ? 'View My Jobs →' : 'Submit Request →'}
           </button>
         )}
       </div>

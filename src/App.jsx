@@ -1,21 +1,44 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './hooks/useAuth.jsx'
-import BottomNav from './components/BottomNav'
-import Auth from './pages/Auth'
-import Onboarding from './pages/Onboarding'
-import Jobs from './pages/Jobs'
-import Saved from './pages/Saved'
-import Profile from './pages/Profile'
-import Admin from './pages/Admin'
+import BottomNav from './components/BottomNav.jsx'
+import Auth from './pages/Auth.jsx'
+import Onboarding from './pages/Onboarding.jsx'
+import Jobs from './pages/Jobs.jsx'
+import Saved from './pages/Saved.jsx'
+import Profile from './pages/Profile.jsx'
+import Admin from './pages/Admin.jsx'
+import Pending from './pages/Pending.jsx'
 
-function ProtectedRoute({ children }) {
-  const { user, loading } = useAuth()
-  if (loading) return (
-    <div className="min-h-screen bg-radar-bg flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-radar-dark border-t-transparent rounded-full animate-spin" />
+const ADMIN_EMAILS = [
+  'abhijeetsingtomer@gmail.com',
+  'abhijeet.tomar@monotype.com',
+]
+
+function LoadingScreen() {
+  return (
+    <div className="min-h-screen bg-radar-bg flex flex-col items-center justify-center gap-3">
+      <div className="w-10 h-10 border-2 border-radar-dark border-t-transparent rounded-full animate-spin" />
+      <p className="text-radar-muted text-sm">Loading Job Radar...</p>
     </div>
   )
+}
+
+function ProtectedRoute({ children, requireApproved = true }) {
+  const { user, profile, loading } = useAuth()
+
+  if (loading) return <LoadingScreen />
   if (!user) return <Navigate to="/" replace />
+
+  // Admin always has full access
+  if (ADMIN_EMAILS.includes(user.email?.toLowerCase())) return children
+
+  // For non-admins, check approval status
+  if (requireApproved) {
+    const status = profile?.status
+    if (status === 'denied')  return <Pending denied />
+    if (status !== 'approved') return <Pending />
+  }
+
   return children
 }
 
@@ -31,28 +54,42 @@ function AppLayout({ children }) {
 export default function App() {
   const { user, profile, loading } = useAuth()
 
-  if (loading) return (
-    <div className="min-h-screen bg-radar-bg flex flex-col items-center justify-center gap-3">
-      <div className="w-10 h-10 border-2 border-radar-dark border-t-transparent rounded-full animate-spin" />
-      <p className="text-radar-muted text-sm">Loading Job Radar...</p>
-    </div>
-  )
+  if (loading) return <LoadingScreen />
+
+  // Determine where to redirect after login
+  function getHomeRoute() {
+    if (!user) return '/'
+    if (ADMIN_EMAILS.includes(user.email?.toLowerCase())) {
+      return profile?.onboarding_complete ? '/jobs' : '/onboarding'
+    }
+    const status = profile?.status
+    if (status === 'denied')  return '/pending'
+    if (status !== 'approved') return '/pending'
+    return profile?.onboarding_complete ? '/jobs' : '/onboarding'
+  }
 
   return (
     <Routes>
       {/* Public */}
       <Route path="/" element={
-        user
-          ? <Navigate to={profile?.onboarding_complete ? '/jobs' : '/onboarding'} replace />
-          : <Auth />
+        user ? <Navigate to={getHomeRoute()} replace /> : <Auth />
       } />
 
-      {/* Onboarding — auth required but no onboarding check */}
+      {/* Pending/denied — auth required, no approval check */}
+      <Route path="/pending" element={
+        user ? (
+          profile?.status === 'denied' ? <Pending denied /> : <Pending />
+        ) : <Navigate to="/" replace />
+      } />
+
+      {/* Onboarding — auth required, no approval check */}
       <Route path="/onboarding" element={
-        <ProtectedRoute><Onboarding /></ProtectedRoute>
+        <ProtectedRoute requireApproved={false}>
+          <Onboarding />
+        </ProtectedRoute>
       } />
 
-      {/* Main app — auth + bottom nav */}
+      {/* Main app — auth + approval required */}
       <Route path="/jobs" element={
         <ProtectedRoute>
           <AppLayout><Jobs /></AppLayout>
@@ -68,13 +105,14 @@ export default function App() {
           <AppLayout><Profile /></AppLayout>
         </ProtectedRoute>
       } />
+
+      {/* Admin — auth required, handled internally */}
       <Route path="/admin" element={
-        <ProtectedRoute>
+        <ProtectedRoute requireApproved={false}>
           <AppLayout><Admin /></AppLayout>
         </ProtectedRoute>
       } />
 
-      {/* Fallback */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )
