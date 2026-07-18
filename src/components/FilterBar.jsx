@@ -24,12 +24,40 @@ const LOCATIONS = [
   { value: 'Bengaluru', label: 'Bengaluru' },
   { value: 'Mumbai', label: 'Mumbai' },
   { value: 'Hyderabad', label: 'Hyderabad' },
+  { value: 'Pune', label: 'Pune' },
   { value: 'Remote', label: 'Remote' },
 ]
 
+const SOURCES = [
+  { value: '', label: 'All Sources' },
+  { value: 'Greenhouse', label: 'Greenhouse' },
+  { value: 'Lever', label: 'Lever' },
+  { value: 'Workday', label: 'Workday' },
+  { value: 'LinkedIn', label: 'LinkedIn' },
+  { value: 'Wellfound', label: 'Wellfound' },
+  { value: 'Randstad', label: 'Randstad' },
+  { value: 'Michael Page', label: 'Michael Page' },
+  { value: 'TeamLease', label: 'TeamLease' },
+  { value: 'Instahyre', label: 'Instahyre' },
+  { value: 'Career Page', label: 'Career Page' },
+  { value: 'SmartRecruiters', label: 'SmartRecruiters' },
+]
+
+function Pill({ active, onClick, children }) {
+  return (
+    <button onClick={onClick}
+            className={`flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors
+              ${active
+                ? 'bg-radar-dark text-white border-radar-dark'
+                : 'bg-white text-radar-muted border-radar-border hover:bg-gray-50'}`}>
+      {children}
+    </button>
+  )
+}
+
 export default function FilterBar({ filters, onChange }) {
   const [showFilters, setShowFilters] = useState(false)
-  const hasActiveFilters = filters.category || filters.pay || filters.location
+  const hasActiveFilters = filters.category || filters.pay || filters.location || filters.source
 
   return (
     <div className="space-y-3">
@@ -63,53 +91,63 @@ export default function FilterBar({ filters, onChange }) {
         </button>
       </div>
 
-      {/* Category pills — always visible */}
+      {/* Category pills */}
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
         {CATEGORIES.map(cat => (
-          <button key={cat.value}
-                  onClick={() => onChange({ ...filters, category: cat.value })}
-                  className={`flex-shrink-0 text-xs font-medium px-3 py-1.5 rounded-full border transition-colors
-                    ${filters.category === cat.value
-                      ? 'bg-radar-dark text-white border-radar-dark'
-                      : 'bg-white text-radar-muted border-radar-border hover:bg-gray-50'}`}>
+          <Pill key={cat.value}
+                active={filters.category === cat.value}
+                onClick={() => onChange({ ...filters, category: cat.value })}>
             {cat.label}
-          </button>
+          </Pill>
         ))}
       </div>
 
       {/* Expanded filters */}
       {showFilters && (
         <div className="bg-white border border-radar-border rounded-2xl p-4 space-y-4">
+
+          {/* Location */}
           <div>
             <p className="text-xs font-medium text-radar-muted mb-2 uppercase tracking-wide">Location</p>
             <div className="flex flex-wrap gap-2">
               {LOCATIONS.map(loc => (
-                <button key={loc.value}
-                        onClick={() => onChange({ ...filters, location: loc.value })}
-                        className={`text-xs px-3 py-1.5 rounded-full border transition-colors
-                          ${filters.location === loc.value
-                            ? 'bg-radar-dark text-white border-radar-dark'
-                            : 'bg-radar-bg text-radar-muted border-radar-border hover:bg-gray-100'}`}>
+                <Pill key={loc.value}
+                      active={filters.location === loc.value}
+                      onClick={() => onChange({ ...filters, location: loc.value })}>
                   {loc.label}
-                </button>
+                </Pill>
               ))}
             </div>
           </div>
+
+          {/* Pay level */}
           <div>
             <p className="text-xs font-medium text-radar-muted mb-2 uppercase tracking-wide">Pay Level</p>
             <div className="flex flex-wrap gap-2">
               {PAY_LEVELS.map(pay => (
-                <button key={pay.value}
-                        onClick={() => onChange({ ...filters, pay: pay.value })}
-                        className={`text-xs px-3 py-1.5 rounded-full border transition-colors
-                          ${filters.pay === pay.value
-                            ? 'bg-radar-dark text-white border-radar-dark'
-                            : 'bg-radar-bg text-radar-muted border-radar-border hover:bg-gray-100'}`}>
+                <Pill key={pay.value}
+                      active={filters.pay === pay.value}
+                      onClick={() => onChange({ ...filters, pay: pay.value })}>
                   {pay.label}
-                </button>
+                </Pill>
               ))}
             </div>
           </div>
+
+          {/* Source */}
+          <div>
+            <p className="text-xs font-medium text-radar-muted mb-2 uppercase tracking-wide">Source</p>
+            <div className="flex flex-wrap gap-2">
+              {SOURCES.map(src => (
+                <Pill key={src.value}
+                      active={filters.source === src.value}
+                      onClick={() => onChange({ ...filters, source: src.value })}>
+                  {src.label}
+                </Pill>
+              ))}
+            </div>
+          </div>
+
           {hasActiveFilters && (
             <button onClick={() => onChange({ search: filters.search || '' })}
                     className="text-xs text-red-500 hover:text-red-700 font-medium">

@@ -16,7 +16,7 @@ export function useJobs(filters = {}) {
       if (filters.location)  query = query.ilike('location', `%${filters.location}%`)
       if (filters.pay)       query = query.eq('pay_level', filters.pay)
       if (filters.search)    query = query.or(`title.ilike.%${filters.search}%,company.ilike.%${filters.search}%`)
-      if (filters.source)    query = query.eq('source', filters.source)
+      if (filters.source)    query = query.eq('ats', filters.source)
 
       query = query.order('first_seen', { ascending: false }).limit(filters.limit || 50)
 
