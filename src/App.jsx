@@ -36,6 +36,7 @@ function ProtectedRoute({ children, requireApproved = true }) {
   // For non-admins, check approval status
   if (requireApproved) {
     const status = profile?.status
+    if (status === 'removed') return <Pending removed />
     if (status === 'denied')  return <Pending denied />
     if (status !== 'approved') return <Pending />
   }
@@ -57,13 +58,13 @@ export default function App() {
 
   if (loading) return <LoadingScreen />
 
-  // Determine where to redirect after login
   function getHomeRoute() {
     if (!user) return '/'
     if (ADMIN_EMAILS.includes(user.email?.toLowerCase())) {
       return profile?.onboarding_complete ? '/jobs' : '/onboarding'
     }
     const status = profile?.status
+    if (status === 'removed') return '/pending'
     if (status === 'denied')  return '/pending'
     if (status !== 'approved') return '/pending'
     return profile?.onboarding_complete ? '/jobs' : '/onboarding'
@@ -76,21 +77,22 @@ export default function App() {
         user ? <Navigate to={getHomeRoute()} replace /> : <Auth />
       } />
 
-      {/* Pending/denied — auth required, no approval check */}
+      {/* Pending/denied/removed — auth required, no approval check */}
       <Route path="/pending" element={
         user ? (
-          profile?.status === 'denied' ? <Pending denied /> : <Pending />
+          profile?.status === 'removed' ? <Pending removed /> :
+          profile?.status === 'denied'  ? <Pending denied />  : <Pending />
         ) : <Navigate to="/" replace />
       } />
 
-      {/* Onboarding — auth required, no approval check */}
+      {/* Onboarding */}
       <Route path="/onboarding" element={
         <ProtectedRoute requireApproved={false}>
           <Onboarding />
         </ProtectedRoute>
       } />
 
-      {/* Main app — auth + approval required */}
+      {/* Main app */}
       <Route path="/jobs" element={
         <ProtectedRoute>
           <AppLayout><Jobs /></AppLayout>
@@ -107,7 +109,7 @@ export default function App() {
         </ProtectedRoute>
       } />
 
-      {/* Admin — auth required, handled internally */}
+      {/* Admin */}
       <Route path="/admin" element={
         <ProtectedRoute requireApproved={false}>
           <AppLayout><Admin /></AppLayout>
