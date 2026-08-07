@@ -25,8 +25,28 @@ const CAT_LABELS = {
 }
 
 const SOURCE_LABELS = {
-  greenhouse: 'Greenhouse', lever: 'Lever', workday: 'Workday',
-  career_page: 'Career Page', linkedin: 'LinkedIn', wellfound: 'Wellfound',
+  // Keys match exact `ats` column values in Supabase (title-case, from SOURCE_DISPLAY in push_jobs_to_supabase.py)
+  'Greenhouse':      'Greenhouse',
+  'Lever':           'Lever',
+  'Workday':         'Workday',
+  'Ashby':           'Ashby',
+  'SmartRecruiters': 'SmartRecruiters',
+  'LinkedIn':        'LinkedIn',
+  'Wellfound':       'Wellfound',
+  'Randstad':        'Randstad',
+  'Michael Page':    'Michael Page',
+  'TeamLease':       'TeamLease',
+  'ABC Consultants': 'ABC Consultants',
+  'Instahyre':       'Instahyre',
+  'Eightfold':       'Eightfold',
+  'Career Page':     'Career Page',
+  // lowercase fallbacks for any old records
+  'greenhouse':  'Greenhouse',
+  'lever':        'Lever',
+  'workday':      'Workday',
+  'career_page':  'Career Page',
+  'linkedin':     'LinkedIn',
+  'wellfound':    'Wellfound',
 }
 
 function initials(name) {
