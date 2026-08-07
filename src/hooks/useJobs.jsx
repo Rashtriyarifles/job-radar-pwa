@@ -10,20 +10,40 @@ export function useJobs(filters = {}) {
   const fetchJobs = useCallback(async () => {
     setLoading(true)
     try {
-      let query = supabase.from('jobs').select('*', { count: 'exact' })
+      // Supabase caps at 1000 rows per request — paginate to fetch everything
+      const PAGE_SIZE = 1000
+      let allJobs = []
+      let page    = 0
+      let totalCount = 0
 
-      if (filters.category)  query = query.eq('category', filters.category)
-      if (filters.location)  query = query.ilike('location', `%${filters.location}%`)
-      if (filters.pay)       query = query.eq('pay_level', filters.pay)
-      if (filters.search)    query = query.or(`title.ilike.%${filters.search}%,company.ilike.%${filters.search}%`)
-      if (filters.source)    query = query.eq('ats', filters.source)
+      while (true) {
+        let query = supabase
+          .from('jobs')
+          .select('*', { count: 'exact' })
 
-      query = query.order('first_seen', { ascending: false }).limit(filters.limit || 50)
+        if (filters.category) query = query.eq('category', filters.category)
+        if (filters.location) query = query.ilike('location', `%${filters.location}%`)
+        if (filters.pay)      query = query.eq('pay_level', filters.pay)
+        if (filters.search)   query = query.or(`title.ilike.%${filters.search}%,company.ilike.%${filters.search}%`)
+        if (filters.source)   query = query.eq('ats', filters.source)
 
-      const { data, error: err, count } = await query
-      if (err) throw err
-      setJobs(data || [])
-      setTotal(count || 0)
+        query = query
+          .order('first_seen', { ascending: false })
+          .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
+
+        const { data, error: err, count } = await query
+        if (err) throw err
+
+        allJobs = [...allJobs, ...(data || [])]
+        if (page === 0) totalCount = count || 0
+
+        // Stop when this page returned fewer rows than PAGE_SIZE — we're done
+        if (!data || data.length < PAGE_SIZE) break
+        page++
+      }
+
+      setJobs(allJobs)
+      setTotal(totalCount)
     } catch (e) {
       setError(e.message)
     } finally {
